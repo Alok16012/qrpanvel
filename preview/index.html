@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JIJA TRF Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@600;700&family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Playfair+Display:wght@700&family=Poppins:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root { --g:#1B5E20; --g2:#2E7D32; --leaf:#43A047; --mint:#EEF6EA; --mb:#A5D6A7; --gold:#C9A227;
+          --navy:#1A237E; --cream:#FBFAF3; --t:#263238; --m:#607D8B; --bg:#F1F5EF; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Open Sans',Arial,sans-serif; background:var(--bg); color:var(--t); }
+  header { background:var(--g); color:#fff; padding:14px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  header b { font-family:Poppins; font-size:20px; }
+  header span { opacity:.85; font-size:13px; }
+  nav { display:flex; gap:4px; padding:0 16px; background:#fff; border-bottom:1px solid #dfe7dc; overflow-x:auto; }
+  nav button { border:0; background:none; padding:14px 16px; font:600 14px Poppins; color:var(--m); cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap; }
+  nav button.on { color:var(--g); border-color:var(--g); }
+  main { padding:20px 16px; max-width:1180px; margin:0 auto; }
+  section { display:none; } section.on { display:block; }
+  .note { background:#FFF8E1; border:1px solid #FFE082; padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; }
+
+  /* Form */
+  .gform { max-width:640px; margin:0 auto; }
+  .gcard { background:#fff; border-radius:10px; border:1px solid #dadce0; padding:20px 24px; margin-bottom:12px; }
+  .gcard.top { border-top:10px solid var(--g); }
+  .gcard h2 { margin:0 0 6px; font-family:Poppins; color:var(--g); }
+  .gcard label.q { display:block; font-weight:700; margin-bottom:10px; }
+  .gcard label.q i { color:#d93025; font-style:normal; }
+  .gcard .help { font-size:12px; color:var(--m); margin:-6px 0 8px; }
+  .gcard input[type=text], .gcard input[type=date], .gcard input[type=email], .gcard textarea {
+    width:100%; border:0; border-bottom:1px solid #ccc; padding:8px 2px; font:15px 'Open Sans'; background:none; }
+  .gcard input:focus, .gcard textarea:focus { outline:none; border-bottom:2px solid var(--g); }
+  .opt { display:block; padding:5px 0; font-size:14px; }
+  .err { color:#d93025; font-size:12px; margin-top:6px; display:none; }
+  .btn { background:var(--g2); color:#fff; border:0; border-radius:6px; padding:10px 22px; font:600 14px Poppins; cursor:pointer; }
+  .btn.ghost { background:#fff; color:var(--g); border:1px solid var(--g); }
+
+  /* Certificate */
+  .certwrap { overflow:auto; padding-bottom:10px; }
+  .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+  .toolbar select { padding:8px; border-radius:6px; border:1px solid var(--mb); font-size:14px; }
+  .cert { position:relative; width:842px; height:595px; background:var(--cream); margin:0 auto;
+          box-shadow:0 6px 30px rgba(0,0,0,.15); font-family:'Open Sans'; transform-origin:top left; }
+  .cert .a { position:absolute; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.2; }
+  .cert .l { justify-content:flex-start; text-align:left; } .cert .r { justify-content:flex-end; text-align:right; }
+  .cert .tp { align-items:flex-start; }
+
+  /* Sheet */
+  .tablewrap { overflow:auto; background:#fff; border:1px solid #dfe7dc; border-radius:8px; }
+  table.sheet { border-collapse:collapse; font-size:12.5px; white-space:nowrap; }
+  table.sheet th { background:var(--g); color:#fff; padding:8px 10px; text-align:left; position:sticky; top:0; }
+  table.sheet th.sys { background:var(--navy); }
+  table.sheet td { padding:7px 10px; border-bottom:1px solid #eef2ec; border-right:1px solid #f3f6f2; }
+  table.sheet a { color:var(--g2); }
+
+  /* Dashboard */
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+  .kpi { background:#fff; border:1px solid #dfe7dc; border-radius:10px; padding:14px; }
+  .kpi small { color:var(--m); font-size:12px; font-weight:700; text-transform:uppercase; }
+  .kpi div { font:700 28px Poppins; color:var(--g); margin-top:4px; }
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; }
+  .panel { background:#fff; border:1px solid #dfe7dc; border-radius:10px; padding:16px; }
+  .panel h3 { margin:0 0 12px; font:600 15px Poppins; color:var(--g); }
+  .bar { display:grid; grid-template-columns:1fr 2fr 70px; gap:8px; align-items:center; font-size:13px; margin:7px 0; }
+  .bar .track { background:var(--mint); height:14px; border-radius:7px; overflow:hidden; }
+  .bar .fill { background:var(--g2); height:100%; border-radius:7px; }
+  .bar b { text-align:right; }
+
+  /* Verify */
+  .vcard { max-width:480px; margin:0 auto; background:#fff; border:3px solid var(--g); border-radius:14px; overflow:hidden; }
+  .vhead { background:var(--g); color:#fff; padding:16px 20px; } .vhead h2 { margin:0; font-family:Poppins; }
+  .vbody { padding:20px; }
+  .badge { display:inline-block; padding:6px 14px; border-radius:20px; font-weight:700; font-size:14px; }
+  .ok { background:var(--mint); color:var(--g); border:1px solid var(--mb); } .bad { background:#FFEBEE; color:#C62828; border:1px solid #EF9A9A; }
+  .vbody table { width:100%; border-collapse:collapse; margin-top:10px; }
+  .vbody td { padding:8px 4px; border-bottom:1px solid #E8EFE5; font-size:14px; } .vbody td:first-child { color:var(--m); }
+  .vform { display:flex; gap:8px; margin-top:14px; } .vform input { flex:1; padding:10px; border:1px solid var(--mb); border-radius:8px; text-transform:uppercase; }
+
+  @media print {
+    @page { size:A4 landscape; margin:0; }
+    body { background:#fff; } header, nav, .toolbar, .note, section:not(#tab-cert) { display:none !important; }
+    main { padding:0; } .cert { box-shadow:none; transform:none !important; }
+  }
+</style>
+</head>
+<body>
+<header><b>♻ JIJA TRF Panvel</b><span>Digital Textile Donation Management System · Local Preview</span></header>
+<nav>
+  <button data-tab="form" class="on">1. Donor Form</button>
+  <button data-tab="cert">2. Certificate</button>
+  <button data-tab="sheet">3. Donations Sheet</button>
+  <button data-tab="dash">4. Dashboard</button>
+  <button data-tab="verify">5. Verify (QR)</button>
+</nav>
+<main>
+  <div class="note">Ye <b>local preview</b> hai. Asli system Google Form, Sheet aur Apps Script par chalega. Yahan data sirf is browser me save hota hai, aur certificate ka design Slides template jaisa hi hai.</div>
+
+  <!-- FORM -->
+  <section id="tab-form" class="on">
+    <form class="gform" id="donorForm" novalidate>
+      <div class="gcard top">
+        <h2>वस्त्रदान शिबिर | Textile Donation Registration</h2>
+        <div>JIJA Textile Recovery Facility – Panvel<br>Give Old Clothes a New Life ♻️ — Donate • Recover • Reuse • Recycle</div>
+      </div>
+      <div class="gcard"><label class="q">Donor Name <i>*</i></label><div class="help">दात्याचे नाव — as it should appear on the certificate</div>
+        <input type="text" name="name" required><div class="err">This is a required question</div></div>
+      <div class="gcard"><label class="q">Donor Type <i>*</i></label>
+        <div data-radio="donorType" data-req="1"></div><div class="err">This is a required question</div></div>
+      <div class="gcard"><label class="q">Organization / Society / School Name</label><div class="help">Optional — e.g. Neelkanth Darshan Society</div>
+        <input type="text" name="org"></div>
+      <div class="gcard"><label class="q">Mobile Number <i>*</i></label>
+        <input type="text" name="mobile" inputmode="numeric" maxlength="10"><div class="err">Enter a 10-digit mobile number</div></div>
+      <div class="gcard"><label class="q">Email (certificate will be emailed)</label>
+        <input type="email" name="email"><div class="err">Enter a valid email</div></div>
+      <div class="gcard"><label class="q">Address</label><textarea name="address" rows="2"></textarea></div>
+      <div class="gcard"><label class="q">Type of Textile <i>*</i></label>
+        <div data-check="textile"></div><div class="err">Select at least one</div></div>
+      <div class="gcard"><label class="q">Estimated Quantity (Kg) <i>*</i></label><div class="help">Approximate weight in KG (e.g. 5 or 7.5)</div>
+        <input type="text" name="weight" inputmode="decimal"><div class="err">Enter weight in KG, greater than 0</div></div>
+      <div class="gcard"><label class="q">Number of Items (approx.)</label>
+        <input type="text" name="items" inputmode="numeric"><div class="err">Whole number only</div></div>
+      <div class="gcard"><label class="q">Footwear (pairs)</label><div class="help">Number of pairs (0 if none)</div>
+        <input type="text" name="pairs" inputmode="numeric"><div class="err">Whole number only</div></div>
+      <div class="gcard"><label class="q">Collection Camp / Location <i>*</i></label>
+        <div data-radio="camp" data-req="1"></div><div class="err">This is a required question</div></div>
+      <div class="gcard"><label class="q">Date of Donation <i>*</i></label>
+        <input type="date" name="date"><div class="err">This is a required question</div></div>
+      <div class="gcard"><label class="q">Consent <i>*</i></label>
+        <label class="opt"><input type="checkbox" name="consent"> I donate these textiles voluntarily for reuse, upcycling and recycling by JIJA TRF Panvel.</label>
+        <div class="err">This is a required question</div></div>
+      <div style="display:flex;gap:10px;justify-content:space-between">
+        <button class="btn" type="submit">Submit</button>
+        <button class="btn ghost" type="button" id="fillDemo">Fill demo data</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- CERTIFICATE -->
+  <section id="tab-cert">
+    <div class="toolbar">
+      <select id="certPick"></select>
+      <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+      <span style="font-size:13px;color:var(--m)">Print karte waqt "Save as PDF" chuno. Page A4 landscape hai.</span>
+    </div>
+    <div class="certwrap"><div id="certHost"></div></div>
+  </section>
+
+  <!-- SHEET -->
+  <section id="tab-sheet">
+    <div class="toolbar">
+      <b style="color:var(--g)">Google Sheet → "Donations"</b>
+      <span style="font-size:13px;color:var(--m)">Green: form columns · Blue: system columns (script khud bharta hai)</span>
+      <button class="btn ghost" id="resetData" style="margin-left:auto">Reset demo data</button>
+    </div>
+    <div class="tablewrap"><table class="sheet" id="sheetTable"></table></div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="tab-dash">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="panel"><h3>Camp-wise Collection (KG)</h3><div id="campBars"></div></div>
+      <div class="panel"><h3>Society / Organization-wise (KG)</h3><div id="orgBars"></div></div>
+      <div class="panel"><h3>Textile Type Mix (donations)</h3><div id="typeBars"></div></div>
+      <div class="panel"><h3>Month-wise Collection (KG)</h3><div id="monthBars"></div></div>
+    </div>
+  </section>
+
+  <!-- VERIFY -->
+  <section id="tab-verify">
+    <div class="vcard">
+      <div class="vhead"><h2>♻ JIJA TRF PANVEL</h2><div style="font-size:13px;opacity:.9">Textile Donation Certificate Verification</div></div>
+      <div class="vbody">
+        <div id="vResult"><p>Donation ID daalo, ya certificate ka QR scan karo.</p></div>
+        <form class="vform" id="vForm"><input id="vId" placeholder="JTRF-2026-00001"><button class="btn">Verify</button></form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const CONFIG = {
+  ORG_NAME: 'JIJA Textile Recovery Facility – Panvel', ORG_SHORT: 'JIJA TRF Panvel',
+  PHONE: '98346 65566', WEBSITE: 'jijagroup.in', EMAIL: 'jtrfp@jijagroup.in',
+  ADDRESS: 'Panvel, Navi Mumbai, Maharashtra', SIGNATORY_NAME: '', SIGNATORY_DESIGNATION: 'Authorized Signatory',
+  CAMPS: ['Neelkanth Darshan Society – Opp. Orion Mall, Panvel', 'JIJA TRF Facility – Panvel', 'Doorstep Pickup'],
+};
+const DONOR_TYPES = ['Individual', 'Society', 'Company / CSR Partner', 'School / College', 'NGO / Other'];
+const TEXTILES = ['Clothes', 'Footwear', 'Bags', 'Bedsheets / Curtains', 'Towels / Linen'];
+const KEY = 'jtrf_preview_rows_v1';
+
+// ---------- storage ----------
+function demoRows() {
+  return [
+    mk('2026-10-01T10:12:00', 'Priya Deshmukh', 'Individual', '', '9876543210', 'Clothes, Bags', 6.5, 18, 0, 0),
+    mk('2026-10-01T11:40:00', 'Neelkanth Darshan Society', 'Society', 'Neelkanth Darshan Society', '9822012345', 'Clothes, Footwear, Bedsheets / Curtains', 42, 120, 14, 0),
+    mk('2026-10-02T09:05:00', 'Rahul Patil', 'Individual', '', '9930011122', 'Clothes, Footwear', 8, 22, 3, 2),
+    mk('2026-09-20T16:30:00', 'Orion Retail CSR Team', 'Company / CSR Partner', 'Orion Retail Pvt. Ltd.', '9819098190', 'Clothes, Bags, Towels / Linen', 75.5, 210, 0, 1),
+  ].map((r, i) => Object.assign(r, { id: 'JTRF-2026-' + String(i + 1).padStart(5, '0'), status: 'Generated' }));
+  function mk(ts, name, type, org, mobile, textile, weight, items, pairs, camp) {
+    return { ts, name, donorType: type, org, mobile, email: '', address: 'Panvel', textile, weight, items, pairs,
+             camp: CONFIG.CAMPS[camp], date: ts.slice(0, 10), emailStatus: 'No email' };
+  }
+}
+function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(v)) return v; } catch (e) {} return demoRows(); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(rows)); } catch (e) {} }
+let rows = load();
+
+// ---------- helpers (same logic as Code.gs) ----------
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+const cleanName = v => String(v || '').replace(/[\u0000-\u001F{}<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+const num = v => { const n = parseFloat(String(v ?? '').replace(/[^0-9.\-]/g, '')); return isFinite(n) && n > 0 ? n : 0; };
+const r2 = n => Math.round(n * 100) / 100;
+const fmtDate = d => { const [y, m, dd] = String(d).slice(0, 10).split('-'); return dd ? `${dd}/${m}/${y}` : d; };
+function nextId(year) {
+  let n = 0;
+  rows.forEach(r => { const m = String(r.id || '').match(/^JTRF-(\d{4})-(\d+)$/); if (m && m[1] === year) n = Math.max(n, +m[2]); });
+  return `JTRF-${year}-${String(n + 1).padStart(5, '0')}`;
+}
+const verifyUrl = id => location.origin + location.pathname + '#verify=' + encodeURIComponent(id);
+function waLink(r) {
+  const m = String(r.mobile).replace(/\D/g, '').slice(-10); if (m.length !== 10) return '';
+  const msg = `Namaskar ${r.name} 🙏\nThank you for donating ${r2(r.weight)} KG of textiles to ${CONFIG.ORG_SHORT}.\nDonation ID: ${r.id}\n♻️ Zero Textile Waste Panvel`;
+  return 'https://wa.me/91' + m + '?text=' + encodeURIComponent(msg);
+}
+
+// ---------- tabs ----------
+function show(tab) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === 'tab-' + tab));
+  if (tab === 'cert') renderCertPicker(); if (tab === 'sheet') renderSheet(); if (tab === 'dash') renderDash();
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => show(b.dataset.tab));
+
+// ---------- form ----------
+function buildChoices() {
+  const radio = (name, list, other) => list.map(v => `<label class="opt"><input type="radio" name="${name}" value="${esc(v)}"> ${esc(v)}</label>`).join('')
+    + (other ? `<label class="opt"><input type="radio" name="${name}" value="__other"> Other: <input type="text" name="${name}Other" style="width:60%"></label>` : '');
+  document.querySelector('[data-radio=donorType]').innerHTML = radio('donorType', DONOR_TYPES);
+  document.querySelector('[data-radio=camp]').innerHTML = radio('camp', CONFIG.CAMPS, true);
+  document.querySelector('[data-check=textile]').innerHTML = TEXTILES.map(v => `<label class="opt"><input type="checkbox" name="textile" value="${esc(v)}"> ${esc(v)}</label>`).join('')
+    + `<label class="opt"><input type="checkbox" name="textile" value="__other"> Other: <input type="text" name="textileOther" style="width:60%"></label>`;
+}
+buildChoices();
+const form = document.getElementById('donorForm');
+form.date.value = new Date().toISOString().slice(0, 10);
+
+document.getElementById('fillDemo').onclick = () => {
+  form.name.value = 'Sunita Ramesh Kulkarni'; form.org.value = 'Neelkanth Darshan Society';
+  form.mobile.value = '9834665566'; form.email.value = ''; form.address.value = 'Panvel';
+  form.weight.value = '12.5'; form.items.value = '34'; form.pairs.value = '4';
+  form.querySelector('[name=donorType][value="Individual"]').checked = true;
+  form.querySelector(`[name=camp][value="${CONFIG.CAMPS[0]}"]`).checked = true;
+  ['Clothes', 'Footwear'].forEach(v => form.querySelector(`[name=textile][value="${v}"]`).checked = true);
+  form.consent.checked = true;
+};
+
+form.onsubmit = e => {
+  e.preventDefault();
+  form.querySelectorAll('.err').forEach(x => x.style.display = 'none');
+  const fail = el => { el.closest('.gcard').querySelector('.err').style.display = 'block'; return false; };
+  let ok = true;
+  const pick = n => form.querySelector(`[name=${n}]:checked`);
+  if (!cleanName(form.name.value)) ok = fail(form.name);
+  if (!pick('donorType')) ok = fail(form.querySelector('[name=donorType]'));
+  if (!/^[6-9][0-9]{9}$/.test(form.mobile.value.trim())) ok = fail(form.mobile);
+  if (form.email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.value.trim())) ok = fail(form.email);
+  const textiles = [...form.querySelectorAll('[name=textile]:checked')].map(c => c.value === '__other' ? form.textileOther.value.trim() : c.value).filter(Boolean);
+  if (!textiles.length) ok = fail(form.querySelector('[name=textile]'));
+  if (!(num(form.weight.value) > 0)) ok = fail(form.weight);
+  if (form.items.value && !/^\d+$/.test(form.items.value.trim())) ok = fail(form.items);
+  if (form.pairs.value && !/^\d+$/.test(form.pairs.value.trim())) ok = fail(form.pairs);
+  let camp = pick('camp'); camp = camp ? (camp.value === '__other' ? form.campOther.value.trim() : camp.value) : '';
+  if (!camp) ok = fail(form.querySelector('[name=camp]'));
+  if (!form.date.value) ok = fail(form.date);
+  if (!form.consent.checked) ok = fail(form.consent);
+  if (!ok) { form.querySelector('.err[style*=block]').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+
+  const now = new Date();
+  const r = {
+    ts: now.toISOString(), name: cleanName(form.name.value), donorType: pick('donorType').value, org: cleanName(form.org.value),
+    mobile: form.mobile.value.trim(), email: form.email.value.trim(), address: form.address.value.trim(), textile: textiles.join(', '),
+    weight: num(form.weight.value), items: num(form.items.value), pairs: num(form.pairs.value), camp, date: form.date.value,
+  };
+  r.id = nextId(String(now.getFullYear()));
+  r.status = 'Generated';
+  r.emailStatus = r.email ? 'Sent (simulated)' : 'No email';
+  rows.push(r); save();
+  form.reset(); form.date.value = new Date().toISOString().slice(0, 10);
+  show('cert'); document.getElementById('certPick').value = r.id; renderCert(r);
+};
+
+// ---------- certificate (mirrors createCertificateTemplate_) ----------
+function box(x, y, w, h, html, st, cls) {
+  return `<div class="a ${cls || ''}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;${st || ''}">${html}</div>`;
+}
+function certHtml(r) {
+  const G = 'var(--g)', G2 = 'var(--g2)';
+  const len = r.name.length, nameSize = len <= 22 ? 30 : len <= 32 ? 24 : len <= 45 ? 19 : 15;
+  const org = r.org || (r.donorType && r.donorType !== 'Individual' ? r.donorType : '');
+  const f = (size, extra) => `font-size:${size}px;${extra || ''}`;
+  return [
+    box(8, 8, 826, 579, '', 'border:7px solid #1B5E20;'),
+    box(20, 20, 802, 555, '', 'border:1.5px solid #C9A227;'),
+    box(36, 30, 190, 44, 'JIJA', f(36, `font-family:Poppins;font-weight:700;color:${G}`), 'l'),
+    box(36, 74, 230, 16, 'TEXTILE RECOVERY FACILITY – PANVEL', f(9, `font-family:Poppins;font-weight:700;color:${G}`), 'l'),
+    box(36, 90, 220, 14, 'Recover • Reuse • Recycle • Rebuild', f(8.5, 'font-style:italic;color:var(--leaf)'), 'l'),
+    box(600, 32, 206, 38, 'Waste to Value.<br>Women to Opportunity.', f(11, `font-family:Poppins;font-weight:600;font-style:italic;color:${G2}`), 'r'),
+    box(600, 74, 206, 18, '♻ ZERO TEXTILE WASTE', f(10, `font-family:Poppins;font-weight:700;color:${G}`), 'r'),
+    box(256, 32, 330, 38, 'TEXTILE DONATION', f(20, `background:${G};border:2px solid #C9A227;color:#fff;font-family:Poppins;font-weight:700`)),
+    box(256, 72, 330, 34, 'CERTIFICATE', f(28, `font-family:'Playfair Display';font-weight:700;color:${G};letter-spacing:1px`)),
+    box(256, 106, 330, 22, 'वस्त्र दान प्रमाणपत्र', f(14, "font-family:Mukta;font-weight:700;color:var(--navy)")),
+    box(40, 134, 300, 18, 'Certificate No.:&nbsp; ' + esc(r.id), f(10, 'font-weight:700'), 'l'),
+    box(542, 134, 260, 18, 'Date:&nbsp; ' + esc(fmtDate(r.date)), f(10, 'font-weight:700'), 'r'),
+    box(121, 158, 600, 18, 'This certificate is proudly presented to', f(12, 'font-style:italic;color:var(--m)')),
+    box(81, 176, 680, 40, esc(r.name), f(nameSize, `font-family:'Playfair Display';font-weight:700;color:${G}`)),
+    box(231, 217, 380, 1.5, '', 'background:#C9A227'),
+    box(121, 220, 600, 16, esc(org), f(10.5, 'font-weight:700;color:var(--navy)')),
+    box(121, 240, 600, 16, 'in recognition of the valuable contribution of', f(11)),
+    box(331, 258, 180, 36, esc(r2(r.weight)) + ' KG', f(22, `background:var(--mint);border:1.5px solid ${G2};border-radius:10px;font-family:Poppins;font-weight:700;color:${G}`)),
+    box(81, 298, 680, 16, 'of textile materials to ' + CONFIG.ORG_NAME + ' for responsible', f(11)),
+    box(81, 316, 680, 18, 'REUSE &nbsp;•&nbsp; REPAIR &nbsp;•&nbsp; UPCYCLE &nbsp;•&nbsp; RECYCLE &nbsp;•&nbsp; RECOVER', f(12, `font-family:Poppins;font-weight:700;color:${G2}`)),
+    box(48, 346, 470, 128, '', 'background:var(--mint);border:1px solid var(--mb);border-radius:10px'),
+    box(48, 346, 470, 22, '&nbsp;&nbsp;Donation Details', f(10.5, `background:${G};color:#fff;font-family:Poppins;font-weight:700;border-radius:10px 10px 0 0`), 'l'),
+    box(58, 376, 130, 94, 'Donation ID<br>Type of Textile<br>Items / Footwear<br>Collection Location', f(9.5, 'font-weight:700;line-height:1.75'), 'l tp'),
+    box(186, 376, 326, 94, `:&nbsp; ${esc(r.id)}<br>:&nbsp; ${esc(r.textile)}<br>:&nbsp; ${r.items ? esc(r.items) : '—'} items &nbsp;|&nbsp; ${esc(r.pairs || 0)} pairs footwear<br>:&nbsp; ${esc(r.camp)}`, f(9.5, 'line-height:1.75;white-space:nowrap;overflow:hidden'), 'l tp'),
+    box(548, 350, 92, 92, '<div id="qrSlot"></div>', 'background:#fff;border:1px solid var(--mb)'),
+    box(528, 442, 132, 14, 'Scan to verify', f(8, 'font-style:italic;color:var(--m)')),
+    box(520, 456, 148, 18, esc(r.id), f(11, `font-family:Poppins;font-weight:700;color:${G}`)),
+    box(668, 410, 150, 18, esc(CONFIG.SIGNATORY_NAME), f(9.5, 'font-weight:700')),
+    box(680, 432, 126, 0.8, '', 'background:var(--t)'),
+    box(668, 434, 150, 14, esc(CONFIG.SIGNATORY_DESIGNATION), f(9, 'font-weight:700')),
+    box(662, 448, 162, 26, 'For ' + CONFIG.ORG_NAME, f(7.5, 'color:var(--m)')),
+    box(48, 482, 746, 20, '“Don’t throw textile waste. Recover it!” &nbsp;—&nbsp; Together for a Cleaner &amp; Greener Panvel', f(11, `font-style:italic;font-weight:700;color:${G2}`)),
+    box(20, 510, 802, 65, 'Environmental Protection &nbsp;•&nbsp; Textile Recovery &nbsp;•&nbsp; Resource Conservation &nbsp;•&nbsp; Community Development<br>' +
+      `Tel: ${CONFIG.PHONE} &nbsp; | &nbsp; ${CONFIG.WEBSITE} &nbsp; | &nbsp; ${CONFIG.EMAIL} &nbsp; | &nbsp; ${CONFIG.ADDRESS}`,
+      f(9, 'background:#1B5E20;color:#fff;font-family:Poppins;font-weight:600;line-height:1.6')),
+  ].join('');
+}
+function renderCertPicker() {
+  const sel = document.getElementById('certPick'); const cur = sel.value;
+  sel.innerHTML = rows.slice().reverse().map(r => `<option value="${esc(r.id)}">${esc(r.id)} — ${esc(r.name)}</option>`).join('');
+  if (cur && rows.some(r => r.id === cur)) sel.value = cur;
+  const r = rows.find(x => x.id === sel.value); if (r) renderCert(r);
+}
+document.getElementById('certPick').onchange = e => renderCert(rows.find(r => r.id === e.target.value));
+function renderCert(r) {
+  const host = document.getElementById('certHost');
+  host.innerHTML = `<div class="cert" id="cert">${certHtml(r)}</div>`;
+  const slot = document.getElementById('qrSlot');
+  if (window.QRCode) new QRCode(slot, { text: verifyUrl(r.id), width: 84, height: 84, correctLevel: QRCode.CorrectLevel.M });
+  else slot.textContent = r.id;
+  fitCert();
+}
+function fitCert() {
+  const c = document.getElementById('cert'); if (!c) return;
+  const avail = document.querySelector('.certwrap').clientWidth;
+  const s = Math.min(1.3, avail / 842);
+  c.style.transform = `scale(${s})`; c.style.margin = '0';
+  c.parentElement.style.height = (595 * s) + 'px'; c.parentElement.style.width = (842 * s) + 'px';
+  c.parentElement.style.margin = '0 auto';
+}
+addEventListener('resize', fitCert);
+
+// ---------- sheet ----------
+function renderSheet() {
+  const formCols = ['Timestamp', 'Donor Name', 'Donor Type', 'Organization / Society / School Name', 'Mobile Number', 'Email', 'Type of Textile', 'Estimated Quantity (Kg)', 'Number of Items', 'Footwear (pairs)', 'Collection Camp / Location', 'Date of Donation'];
+  const sysCols = ['Donation ID', 'Certificate Status', 'Certificate Link', 'Email Status', 'WhatsApp Share Link', 'Verify Link'];
+  const head = '<tr>' + formCols.map(h => `<th>${h}</th>`).join('') + sysCols.map(h => `<th class="sys">${h}</th>`).join('') + '</tr>';
+  const body = rows.map(r => '<tr>' + [
+    new Date(r.ts).toLocaleString('en-IN'), r.name, r.donorType, r.org, r.mobile, r.email, r.textile, r2(r.weight), r.items || '', r.pairs || 0, r.camp, fmtDate(r.date)
+  ].map(v => `<td>${esc(v)}</td>`).join('') +
+    `<td><b>${esc(r.id)}</b></td><td style="color:var(--g2);font-weight:700">${esc(r.status)}</td>` +
+    `<td><a href="#" data-cert="${esc(r.id)}">Open certificate</a></td><td>${esc(r.emailStatus)}</td>` +
+    `<td>${waLink(r) ? `<a href="${esc(waLink(r))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}</td>` +
+    `<td><a href="#" data-verify="${esc(r.id)}">Verify</a></td></tr>`).join('');
+  const t = document.getElementById('sheetTable'); t.innerHTML = head + body;
+  t.querySelectorAll('[data-cert]').forEach(a => a.onclick = e => { e.preventDefault(); show('cert'); document.getElementById('certPick').value = a.dataset.cert; renderCert(rows.find(r => r.id === a.dataset.cert)); });
+  t.querySelectorAll('[data-verify]').forEach(a => a.onclick = e => { e.preventDefault(); verify(a.dataset.verify); });
+}
+document.getElementById('resetData').onclick = () => { if (confirm('Reset to demo data?')) { rows = demoRows(); save(); renderSheet(); } };
+
+// ---------- dashboard (mirrors refreshDashboard) ----------
+function renderDash() {
+  const donors = new Set(), camps = {}, orgs = {}, types = {}, months = {};
+  let kg = 0, items = 0, pairs = 0;
+  const add = (b, k, w) => { b[k] = (b[k] || 0) + w; };
+  rows.forEach(r => {
+    kg += r.weight; items += r.items || 0; pairs += r.pairs || 0;
+    donors.add(String(r.mobile).slice(-10) || r.name.toLowerCase());
+    add(camps, r.camp || 'Not specified', r.weight);
+    if (r.org) add(orgs, r.org, r.weight);
+    r.textile.split(',').map(s => s.trim()).filter(Boolean).forEach(t => add(types, t, 1));
+    add(months, String(r.date).slice(0, 7), r.weight);
+  });
+  const k = [['Total Donations', rows.length], ['Unique Donors', donors.size], ['Total KG', r2(kg)], ['Total Items', items], ['Footwear Pairs', pairs], ['Certificates', rows.filter(r => r.status === 'Generated').length]];
+  document.getElementById('kpis').innerHTML = k.map(([l, v]) => `<div class="kpi"><small>${l}</small><div>${v}</div></div>`).join('');
+  const bars = (id, obj, unit, sortByKey) => {
+    const keys = Object.keys(obj).sort(sortByKey ? undefined : (a, b) => obj[b] - obj[a]);
+    const max = Math.max(1, ...keys.map(x => obj[x]));
+    document.getElementById(id).innerHTML = keys.length ? keys.map(x => `<div class="bar"><span title="${esc(x)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x)}</span><div class="track"><div class="fill" style="width:${obj[x] / max * 100}%"></div></div><b>${r2(obj[x])}${unit}</b></div>`).join('') : '<i style="color:var(--m)">No data</i>';
+  };
+  bars('campBars', camps, ' kg'); bars('orgBars', orgs, ' kg'); bars('typeBars', types, ''); bars('monthBars', months, ' kg', true);
+}
+
+// ---------- verify ----------
+function verify(id) {
+  show('verify'); id = String(id || '').trim().toUpperCase(); document.getElementById('vId').value = id;
+  const r = rows.find(x => x.id === id), out = document.getElementById('vResult');
+  out.innerHTML = r
+    ? `<span class="badge ok">✔ Verified Certificate</span><h2 style="color:var(--g);margin:14px 0 2px">${esc(r.name)}</h2><div style="color:var(--m)">${esc(r.org)}</div>
+       <table><tr><td>Donation ID</td><td><b>${esc(r.id)}</b></td></tr><tr><td>Quantity Donated</td><td><b>${r2(r.weight)} KG</b></td></tr>
+       <tr><td>Donation Date</td><td><b>${esc(fmtDate(r.date))}</b></td></tr><tr><td>Collection Location</td><td><b>${esc(r.camp)}</b></td></tr></table>`
+    : `<span class="badge bad">✖ No certificate found</span><p>No donation record matches <b>${esc(id)}</b>.</p>`;
+}
+document.getElementById('vForm').onsubmit = e => { e.preventDefault(); verify(document.getElementById('vId').value); };
+
+// QR deep link: #verify=JTRF-2026-00001
+const hv = decodeURIComponent(location.hash).match(/^#verify=(.+)$/);
+if (hv) verify(hv[1]);
+</script>
+</body>
+</html>

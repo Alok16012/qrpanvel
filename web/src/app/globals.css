@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-g: #1b5e20;
+  --color-g2: #2e7d32;
+  --color-leaf: #43a047;
+  --color-mint: #eef6ea;
+  --color-mb: #a5d6a7;
+  --color-gold: #c9a227;
+  --color-navy: #1a237e;
+  --color-cream: #fbfaf3;
+  --color-ink: #263238;
+  --color-muted: #607d8b;
+  --color-bg: #f4f7f2;
+  --color-line: #dfe7dc;
+  --font-sans: var(--font-open-sans), Arial, sans-serif;
+  --font-head: var(--font-poppins), Arial, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-deva: var(--font-mukta), var(--font-open-sans), sans-serif;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+@layer components {
+.card {
+  @apply rounded-2xl border border-line bg-white;
+}
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg bg-g2 px-5 py-2.5 font-head text-sm font-semibold text-white transition hover:bg-g disabled:cursor-not-allowed disabled:opacity-60;
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg border border-g2 bg-white px-5 py-2.5 font-head text-sm font-semibold text-g transition hover:bg-mint;
+}
+.btn-sm {
+  @apply px-3 py-1.5 text-xs;
+}
+.input {
+  @apply w-full rounded-lg border border-line bg-white px-3 py-2.5 text-[15px] outline-none transition focus:border-g2 focus:ring-2 focus:ring-mb/50;
+}
+.label {
+  @apply mb-1.5 block text-sm font-bold text-ink;
+}
+.err {
+  @apply mt-1.5 text-xs font-semibold text-red-700;
+}
+}
+
+/* Certificate: fixed A4-landscape canvas (842 × 595 pt-like px) */
+.cert {
+  position: relative;
+  width: 842px;
+  height: 595px;
+  background: var(--color-cream);
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  overflow: hidden;
+}
+.cert .a {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+}
+.cert .l { justify-content: flex-start; text-align: left; }
+.cert .r { justify-content: flex-end; text-align: right; }
+.cert .tp { align-items: flex-start; }
+.cert svg { width: 100%; height: 100%; display: block; }
+
+@media print {
+  body { background: #fff !important; }
+  .no-print { display: none !important; }
+  .print-cert-scale { transform: none !important; width: auto !important; height: auto !important; }
+  .print-cert { box-shadow: none !important; transform: none !important; zoom: 1.333; }
+  .print-area { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+}
