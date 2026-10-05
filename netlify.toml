@@ -1,0 +1,8 @@
+# Next.js app lives in web/ — Netlify builds it with its Next.js runtime.
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"

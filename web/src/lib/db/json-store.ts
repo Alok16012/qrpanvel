@@ -1,5 +1,5 @@
 import "server-only";
-import { promises as fs } from "fs";
+import { promises as fs, constants } from "fs";
 import path from "path";
 import os from "os";
 import { DEFAULT_CAMPS, ORG } from "../config";
@@ -13,9 +13,12 @@ interface DbFile {
   counters: Record<string, number>;
 }
 
-const DB_PATH =
-  process.env.DEMO_DB_PATH ||
-  (process.env.VERCEL ? path.join(os.tmpdir(), "jtrf-demo-db.json") : path.join(process.cwd(), "data", "demo-db.json"));
+const TMP_DB = path.join(os.tmpdir(), "jtrf-demo-db.json");
+// Serverless hosts (Vercel, Netlify, …) have a read-only project folder, so
+// the demo file goes to /tmp there. Use Supabase for data that must persist.
+const serverless = !!(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
+let DB_PATH =
+  process.env.DEMO_DB_PATH || (serverless ? TMP_DB : path.join(process.cwd(), "data", "demo-db.json"));
 
 // All reads/writes go through this chain so concurrent submissions can never
 // get the same Donation ID (single Node process).
@@ -43,7 +46,12 @@ async function read(): Promise<DbFile> {
 }
 
 async function write(db: DbFile) {
-  await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
+  try {
+    await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
+    await fs.access(path.dirname(DB_PATH), constants.W_OK);
+  } catch {
+    DB_PATH = TMP_DB; // project folder not writable → fall back to /tmp
+  }
   const tmp = `${DB_PATH}.${process.pid}.${Math.random().toString(36).slice(2)}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(db, null, 2));
   await fs.rename(tmp, DB_PATH); // atomic swap: readers never see a half-written file
