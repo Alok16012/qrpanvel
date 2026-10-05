@@ -6,3 +6,7 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+# Next.js runtime (SSR pages, server actions, route handlers → Netlify Functions)
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
