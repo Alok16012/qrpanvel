@@ -54,3 +54,8 @@ export function whatsappLink(d: { mobile: string; donorName: string; weightKg: n
     `Donation ID: ${d.id}\nYour certificate: ${certUrl}\n♻️ Zero Textile Waste Panvel`;
   return (m.length === 10 ? `https://wa.me/91${m}` : "https://wa.me/") + "?text=" + encodeURIComponent(msg);
 }
+
+/** Caption used for Facebook / native share of a certificate. */
+export function shareText(d: { donorName: string; weightKg: number; id: string }) {
+  return `I donated ${fmtKg(d.weightKg)} KG of textiles to ${ORG.name} ♻️ Donation ID ${d.id}. Don’t throw textile waste – recover it! #ZeroTextileWaste #JIJATRF #Panvel`;
+}

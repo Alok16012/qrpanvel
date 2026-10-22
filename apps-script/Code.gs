@@ -40,6 +40,21 @@ const CONFIG = {
   SIGNATORY_NAME: '',           // e.g. 'Mrs. ABC' – leave blank for empty line
   SIGNATORY_DESIGNATION: 'Authorized Signatory',
 
+  // Official round stamp printed next to the signature. Public PNG URL, e.g.
+  // 'https://<your-netlify-site>/brand/stamp.png' (file: web/public/brand/stamp.png).
+  // Blank = no stamp (you can also insert the PNG into the Slides template by hand).
+  STAMP_IMAGE_URL: '',
+
+  // Donation duration choices (printed on the certificate). First one is the default.
+  DURATIONS: ['One Time', 'Weekly', 'Monthly', 'Quarterly', '6 Months',
+              '1 Year', '2 Years', '3 Years', '4 Years', '5 Years', 'All Time'],
+
+  // Automatic birthday wishes: daily trigger (created by Setup) emails every donor
+  // whose birthday is today and lists WhatsApp links in the "Birthdays" sheet.
+  BIRTHDAY_WISHES: true,
+  BIRTHDAY_HOUR: 9,             // 0-23, in TIMEZONE
+  BIRTHDAY_SHEET: 'Birthdays',
+
   // Collection camps / locations (shown in the Form + used for camp-wise QR codes)
   CAMPS: [
     'Neelkanth Darshan Society – Opp. Orion Mall, Panvel',
@@ -61,6 +76,8 @@ const Q = {
   WEIGHT: 'Estimated Quantity (Kg)',
   ITEMS: 'Number of Items (approx.)',
   FOOTWEAR: 'Footwear (pairs)',
+  DURATION: 'Donation Duration',
+  BIRTHDAY: 'Date of Birth (for birthday wishes)',
   CAMP: 'Collection Camp / Location',
   DATE: 'Date of Donation',
   CONSENT: 'Consent',
@@ -74,6 +91,7 @@ const SYS = {
   FILE_ID: 'Certificate File ID',
   EMAIL_STATUS: 'Email Status',
   WHATSAPP: 'WhatsApp Share Link',
+  FACEBOOK: 'Facebook Share Link',
   VERIFY: 'Verify Link',
   PROCESSED: 'Processed At',
 };
@@ -94,6 +112,7 @@ function onOpen() {
     .addItem('Regenerate certificate (selected row)', 'regenerateSelectedRow')
     .addItem('Refresh dashboard', 'refreshDashboard')
     .addItem('Generate registration / camp QR codes', 'generateCampQRCodes')
+    .addItem('Send today\'s birthday wishes', 'sendBirthdayWishes')
     .addSeparator()
     .addItem('Show system links', 'showLinks')
     .addToUi();
@@ -161,6 +180,15 @@ function installTrigger_() {
     .filter(t => t.getHandlerFunction() === 'handleFormSubmit')
     .forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('handleFormSubmit').forSpreadsheet(ss).onFormSubmit().create();
+
+  // Daily birthday-wish trigger
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'sendBirthdayWishes')
+    .forEach(t => ScriptApp.deleteTrigger(t));
+  if (CONFIG.BIRTHDAY_WISHES) {
+    ScriptApp.newTrigger('sendBirthdayWishes').timeBased()
+      .everyDays(1).atHour(CONFIG.BIRTHDAY_HOUR).inTimezone(CONFIG.TIMEZONE).create();
+  }
 }
 
 function createForm_() {
@@ -200,6 +228,9 @@ function createForm_() {
 
   form.addParagraphTextItem().setTitle(Q.ADDRESS);
 
+  form.addDateItem().setTitle(Q.BIRTHDAY)
+    .setHelpText('Optional — जन्मतारीख. We will send you birthday wishes 🎂 (never shown publicly)');
+
   form.addCheckboxItem().setTitle(Q.TEXTILE)
     .setChoiceValues(['Clothes', 'Footwear', 'Bags', 'Bedsheets / Curtains', 'Towels / Linen'])
     .showOtherOption(true).setRequired(true);
@@ -215,6 +246,10 @@ function createForm_() {
   form.addTextItem().setTitle(Q.FOOTWEAR).setHelpText('Number of pairs (0 if none)')
     .setValidation(FormApp.createTextValidation().requireWholeNumber()
       .setHelpText('Whole number only').build());
+
+  form.addListItem().setTitle(Q.DURATION)
+    .setHelpText('How often / for how long would you like to donate? Printed on the certificate.')
+    .setChoiceValues(CONFIG.DURATIONS).setRequired(true);
 
   form.addMultipleChoiceItem().setTitle(Q.CAMP)
     .setChoiceValues(CONFIG.CAMPS).showOtherOption(true).setRequired(true);
@@ -305,6 +340,7 @@ function processRow_(sheet, row, force) {
     setCell_(sheet, row, cols, SYS.FILE_ID, pdf.getId());
     setCell_(sheet, row, cols, SYS.EMAIL_STATUS, emailStatus);
     setCell_(sheet, row, cols, SYS.WHATSAPP, whatsappLink_(data, pdf.getUrl()));
+    setCell_(sheet, row, cols, SYS.FACEBOOK, facebookLink_(data, pdf.getUrl()));
     setCell_(sheet, row, cols, SYS.VERIFY, data.verifyUrl);
     setCell_(sheet, row, cols, SYS.PROCESSED, new Date());
     setCell_(sheet, row, cols, SYS.STATUS, 'Generated');
@@ -354,6 +390,7 @@ function buildData_(rec, id) {
     weightText: fmtNum_(weight),
     items: items,
     pairs: pairs,
+    duration: String(rec.get(Q.DURATION) || '').trim() || CONFIG.DURATIONS[0],
     location: String(rec.get(Q.CAMP) || '').trim() || CONFIG.ADDRESS,
     dateText: fmtDate_(dateVal),
     verifyUrl: verifyUrlFor_(id),
@@ -392,6 +429,7 @@ function generateCertificate_(data) {
       '{{TEXTILE_TYPE}}': data.textile,
       '{{ITEMS}}': data.items ? String(data.items) : '—',
       '{{FOOTWEAR}}': String(data.pairs || 0),
+      '{{DURATION}}': data.duration,
       '{{LOCATION}}': data.location,
       '{{SIGNATORY_NAME}}': CONFIG.SIGNATORY_NAME,
       '{{SIGNATORY_DESIGNATION}}': CONFIG.SIGNATORY_DESIGNATION,
@@ -519,10 +557,10 @@ function createCertificateTemplate_() {
   const head = rect(48, 346, 470, 22, COLORS.green, null);
   head.getText().setText('  Donation Details');
   styleText_(head, { size: 10.5, bold: true, color: COLORS.white, font: 'Poppins', align: P.START }, sf);
-  text('Donation ID\nType of Textile\nItems / Footwear\nCollection Location',
-    58, 374, 130, 94, { size: 9.5, bold: true, color: COLORS.text, align: P.START, middle: false, spacing: 150 });
-  text(':  {{DONATION_ID}}\n:  {{TEXTILE_TYPE}}\n:  {{ITEMS}} items  |  {{FOOTWEAR}} pairs footwear\n:  {{LOCATION}}',
-    186, 374, 326, 94, { size: 9.5, color: COLORS.text, align: P.START, middle: false, spacing: 150 });
+  text('Donation ID\nType of Textile\nItems / Footwear\nDonation Duration\nCollection Location',
+    58, 372, 130, 100, { size: 9.5, bold: true, color: COLORS.text, align: P.START, middle: false, spacing: 140 });
+  text(':  {{DONATION_ID}}\n:  {{TEXTILE_TYPE}}\n:  {{ITEMS}} items  |  {{FOOTWEAR}} pairs footwear\n:  {{DURATION}}\n:  {{LOCATION}}',
+    186, 372, 326, 100, { size: 9.5, color: COLORS.text, align: P.START, middle: false, spacing: 140 });
 
   // QR + ID
   const qr = rect(548, 350, 92, 92, COLORS.white, COLORS.mintBorder, 1);
@@ -531,11 +569,17 @@ function createCertificateTemplate_() {
   text('Scan to verify', 528, 442, 132, 14, { size: 8, italic: true, color: COLORS.muted });
   text('{{DONATION_ID}}', 520, 456, 148, 18, { size: 11, bold: true, color: COLORS.green, font: 'Poppins' });
 
-  // Signatory
-  line(680, 432, 806, 432, COLORS.text, 0.8);
-  text('{{SIGNATORY_NAME}}', 668, 410, 150, 18, { size: 9.5, bold: true, color: COLORS.text });
-  text('{{SIGNATORY_DESIGNATION}}', 668, 434, 150, 14, { size: 9, bold: true, color: COLORS.text });
-  text('For ' + CONFIG.ORG_NAME, 662, 448, 162, 26, { size: 7.5, color: COLORS.muted });
+  // Official stamp (optional) + signatory
+  if (CONFIG.STAMP_IMAGE_URL) {
+    try {
+      const stamp = slide.insertImage(UrlFetchApp.fetch(CONFIG.STAMP_IMAGE_URL).getBlob(), 697 * sx, 346 * sy, 92 * sx, 92 * sy);
+      stamp.setRotation(-8);
+    } catch (err) { console.warn('Stamp image skipped: ' + err); }
+  }
+  line(680, 445, 806, 445, COLORS.text, 0.8);
+  text('{{SIGNATORY_NAME}}', 668, 424, 150, 18, { size: 9.5, bold: true, color: COLORS.text });
+  text('{{SIGNATORY_DESIGNATION}}', 668, 447, 150, 13, { size: 9, bold: true, color: COLORS.text });
+  text('For ' + CONFIG.ORG_NAME, 662, 459, 162, 16, { size: 7.5, color: COLORS.muted });
 
   // Quote
   text('“Don’t throw textile waste. Recover it!”  —  Together for a Cleaner & Greener Panvel', 48, 482, 746, 20,
@@ -602,6 +646,88 @@ function whatsappLink_(data, pdfUrl) {
     'Thank you for donating ' + data.weightText + ' KG of textiles to ' + CONFIG.ORG_SHORT + '.\n' +
     'Donation ID: ' + data.id + '\nYour certificate: ' + pdfUrl + '\n♻️ Zero Textile Waste Panvel';
   return 'https://wa.me/91' + data.mobile + '?text=' + encodeURIComponent(msg);
+}
+
+/** Facebook share dialog for the certificate (public verify page if deployed, else the PDF link). */
+function facebookLink_(data, pdfUrl) {
+  const url = data.verifyUrl || pdfUrl;
+  if (!url) return '';
+  const quote = 'I donated ' + data.weightText + ' KG of textiles to ' + CONFIG.ORG_NAME +
+    ' ♻️ Donation ID ' + data.id + '. Don’t throw textile waste – recover it! #ZeroTextileWaste #JIJATRF #Panvel';
+  return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url) + '&quote=' + encodeURIComponent(quote);
+}
+
+// ========================= BIRTHDAY WISHES =========================
+/**
+ * Runs daily (trigger created by Setup) – emails every donor whose birthday is
+ * today and writes the list (with ready WhatsApp links) to the "Birthdays" sheet.
+ * Each donor (by mobile) is wished once per day, even if the trigger re-runs.
+ */
+function sendBirthdayWishes() {
+  const sheet = getResponseSheet_();
+  const values = sheet.getDataRange().getValues();
+  const headers = (values.shift() || []).map(norm_);
+  const c = t => headers.indexOf(norm_(t));
+  if (c(Q.BIRTHDAY) < 0) { toast_('No "' + Q.BIRTHDAY + '" column yet'); return; }
+
+  const todayKey = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'MM-dd');
+  const todayText = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'dd/MM/yyyy');
+  const ss = getSs_();
+  const log = ss.getSheetByName(CONFIG.BIRTHDAY_SHEET) || ss.insertSheet(CONFIG.BIRTHDAY_SHEET);
+  if (log.getLastRow() === 0) {
+    log.getRange(1, 1, 1, 7).setValues([['Date', 'Donor Name', 'Mobile', 'Email', 'Email Status', 'WhatsApp Wish Link', 'Last Donation ID']]);
+    styleHeader_(log.getRange(1, 1, 1, 7));
+    log.setColumnWidth(2, 220); log.setColumnWidth(6, 420);
+  }
+  const already = {};
+  if (log.getLastRow() > 1) {
+    log.getRange(2, 1, log.getLastRow() - 1, 3).getValues()
+      .forEach(([d, , m]) => { if (fmtDate_(d) === todayText) already[String(m)] = true; });
+  }
+
+  const seen = {};
+  const rows = [];
+  // Newest rows first so the latest donation record per donor wins.
+  values.slice().reverse().forEach(r => {
+    const b = r[c(Q.BIRTHDAY)];
+    if (!(b instanceof Date)) return;
+    if (Utilities.formatDate(b, CONFIG.TIMEZONE, 'MM-dd') !== todayKey) return;
+    const mobile = String(r[c(Q.MOBILE)] || '').replace(/\D/g, '').slice(-10);
+    const key = mobile || String(r[c(Q.NAME)]).trim().toLowerCase();
+    if (!key || seen[key] || already[mobile]) return;
+    seen[key] = true;
+    const name = cleanName_(r[c(Q.NAME)]);
+    const email = String(r[c(Q.EMAIL)] || '').trim();
+    const msg = birthdayMessage_(name);
+    let status = 'No email';
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      try {
+        MailApp.sendEmail({
+          to: email,
+          subject: '🎂 Happy Birthday, ' + name + '! – from ' + CONFIG.ORG_SHORT,
+          htmlBody: '<div style="font-family:Arial,sans-serif;color:#263238;max-width:560px">' +
+            '<h2 style="color:#1B5E20;margin:0 0 8px">Happy Birthday, ' + esc_(name) + '! 🎉</h2>' +
+            '<p style="white-space:pre-line">' + esc_(msg) + '</p></div>',
+          body: msg,
+          name: CONFIG.ORG_SHORT,
+          replyTo: CONFIG.EMAIL,
+        });
+        status = 'Sent';
+      } catch (err) { status = 'Failed: ' + String(err.message || err).slice(0, 120); }
+    }
+    const wa = mobile.length === 10 ? 'https://wa.me/91' + mobile + '?text=' + encodeURIComponent(msg) : '';
+    rows.push([todayText, name, mobile, email, status, wa, String(r[c(SYS.ID)] || '')]);
+  });
+
+  if (rows.length) log.getRange(log.getLastRow() + 1, 1, rows.length, 7).setValues(rows);
+  toast_(rows.length + ' birthday wish(es) today – see "' + CONFIG.BIRTHDAY_SHEET + '" sheet');
+}
+
+function birthdayMessage_(name) {
+  return '🎂 Happy Birthday, ' + name + '! 🎉\n\n' +
+    CONFIG.ORG_NAME + ' wishes you a very happy birthday and a wonderful year ahead. ' +
+    'Thank you for being part of our Zero Textile Waste mission — your old clothes are giving someone a new start. ♻️\n\n' +
+    'With gratitude,\nTeam ' + CONFIG.ORG_SHORT + '\n📞 ' + CONFIG.PHONE + ' · ' + CONFIG.WEBSITE;
 }
 
 // ========================= QR CODES =========================
@@ -756,8 +882,10 @@ function lookupDonation_(id) {
     org: cleanName_(row[c(Q.ORG)]),
     kg: fmtNum_(toNumber_(row[c(Q.WEIGHT)])),
     date: fmtDate_(row[c(Q.DATE)] || row[c('Timestamp')]),
+    duration: c(Q.DURATION) >= 0 ? String(row[c(Q.DURATION)] || '') : '',
     location: String(row[c(Q.CAMP)] || ''),
     valid: row[c(SYS.STATUS)] === 'Generated',
+    facebook: 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(verifyUrlFor_(id)),
   };
 }
 

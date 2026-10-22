@@ -29,9 +29,36 @@ export function ScaledCert({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function CertificateActions({ id, whatsapp, verifyUrl }: { id: string; whatsapp: string; verifyUrl: string }) {
+export function CertificateActions({
+  id,
+  whatsapp,
+  verifyUrl,
+  certUrl,
+  shareText,
+}: {
+  id: string;
+  whatsapp: string;
+  verifyUrl: string;
+  certUrl: string;
+  shareText: string;
+}) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const facebook = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(certUrl)}&quote=${encodeURIComponent(shareText)}`;
+
+  function shareFacebook(ev: React.MouseEvent<HTMLAnchorElement>) {
+    // Open the Facebook share dialog as a popup; falls back to a normal link.
+    const w = window.open(facebook, "fb-share", "width=640,height=560,menubar=no,toolbar=no,status=no");
+    if (w) ev.preventDefault();
+  }
+
+  async function nativeShare() {
+    try {
+      await navigator.share({ title: `Textile Donation Certificate ${id}`, text: shareText, url: certUrl });
+    } catch {
+      /* user cancelled */
+    }
+  }
 
   async function downloadPdf() {
     const node = document.getElementById("certificate");
@@ -66,6 +93,24 @@ export function CertificateActions({ id, whatsapp, verifyUrl }: { id: string; wh
       <a className="btn bg-[#25D366] hover:bg-[#1da851]" href={whatsapp} target="_blank" rel="noopener noreferrer">
         Share on WhatsApp
       </a>
+      <a
+        className="btn bg-[#1877F2] hover:bg-[#145dbf]"
+        href={facebook}
+        onClick={shareFacebook}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Share this certificate on Facebook"
+      >
+        <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden>
+          <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.8-4.69 4.54-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.5 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z" />
+        </svg>
+        Share on Facebook
+      </a>
+      {typeof navigator !== "undefined" && "share" in navigator && (
+        <button className="btn-ghost" onClick={nativeShare}>
+          Share…
+        </button>
+      )}
       <button className="btn-ghost" onClick={() => window.print()}>
         Print
       </button>

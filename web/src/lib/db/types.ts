@@ -11,6 +11,7 @@ export interface Store {
   getDonation(id: string): Promise<Donation | null>;
   listDonations(): Promise<Donation[]>;
   setDonationStatus(id: string, status: DonationStatus): Promise<void>;
+  setEmailStatus(id: string, emailStatus: string): Promise<void>;
   listCamps(): Promise<Camp[]>;
   addCamp(name: string, slug: string): Promise<Camp>;
   setCampActive(slug: string, active: boolean): Promise<void>;

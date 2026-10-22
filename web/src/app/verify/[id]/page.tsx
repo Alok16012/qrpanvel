@@ -43,6 +43,7 @@ export default async function VerifyResult(props: PageProps<"/verify/[id]">) {
                   <tr><td>Donation ID</td><td>{d.id}</td></tr>
                   <tr><td>Quantity Donated</td><td>{fmtKg(d.weightKg)} KG</td></tr>
                   <tr><td>Textile Type</td><td>{d.textileTypes.join(", ")}</td></tr>
+                  <tr><td>Donation Duration</td><td>{d.duration}</td></tr>
                   <tr><td>Donation Date</td><td>{fmtDate(d.donationDate)}</td></tr>
                   <tr><td>Collection Location</td><td>{d.camp}</td></tr>
                 </tbody>

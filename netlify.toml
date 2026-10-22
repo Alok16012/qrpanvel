@@ -7,6 +7,10 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Scheduled function: daily birthday wishes (web/netlify/functions/birthday-wishes.mts)
+[functions]
+  directory = "netlify/functions"
+
 # Next.js runtime (SSR pages, server actions, route handlers → Netlify Functions)
 [[plugins]]
   package = "@netlify/plugin-nextjs"

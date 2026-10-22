@@ -1,4 +1,5 @@
-import { DONOR_TYPES } from "./config";
+import { DEFAULT_DURATION, DONOR_TYPES, DURATIONS } from "./config";
+import { todayIST } from "./format";
 import type { NewDonation } from "./types";
 
 export type FieldErrors = Partial<Record<string, string>>;
@@ -14,6 +15,8 @@ const num = (v: unknown) => {
   const n = parseFloat(String(v ?? "").replace(/[^0-9.\-]/g, ""));
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
+
+const isDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s));
 
 /** Validates raw form input. Same rules as the original Google Form. */
 export function parseDonation(
@@ -35,6 +38,11 @@ export function parseDonation(
   const email = get("email");
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Enter a valid email";
 
+  // Optional. Must be a real past date (we only use month/day for wishes).
+  const birthday = get("birthday");
+  if (birthday && (!isDate(birthday) || birthday > todayIST() || birthday < "1900-01-01"))
+    errors.birthday = "Enter a valid date of birth";
+
   const textileTypes = fd
     .getAll("textileTypes")
     .map((v) => cleanText(v, 40))
@@ -53,12 +61,14 @@ export function parseDonation(
   const pairsRaw = get("footwearPairs");
   if (pairsRaw && !/^\d+$/.test(pairsRaw)) errors.footwearPairs = "Whole number only";
 
+  const duration = get("duration") || DEFAULT_DURATION;
+  if (!(DURATIONS as readonly string[]).includes(duration)) errors.duration = "Select donation duration";
+
   const camp = cleanText(get("camp") === "__other" ? get("campOther") : get("camp"), 120);
   if (!camp) errors.camp = "Select collection camp / location";
 
   const donationDate = get("donationDate");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(donationDate) || isNaN(Date.parse(donationDate)))
-    errors.donationDate = "Select donation date";
+  if (!isDate(donationDate)) errors.donationDate = "Select donation date";
 
   if (source === "form" && !fd.get("consent")) errors.consent = "Consent is required";
 
@@ -72,10 +82,12 @@ export function parseDonation(
       mobile,
       email,
       address: cleanText(get("address"), 300),
+      birthday,
       textileTypes: [...new Set(textileTypes)],
       weightKg: Math.round(weightKg * 100) / 100,
       items: itemsRaw ? parseInt(itemsRaw, 10) : 0,
       footwearPairs: pairsRaw ? parseInt(pairsRaw, 10) : 0,
+      duration,
       camp,
       donationDate,
       source,

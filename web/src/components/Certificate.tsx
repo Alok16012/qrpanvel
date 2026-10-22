@@ -125,7 +125,7 @@ export function Certificate({ d, qr }: { d: PublicDonation; qr: string }) {
       >
         Donation Details
       </Box>
-      <Box x={58} y={376} w={130} h={94} cls="l tp" style={{ fontSize: 9.5, fontWeight: 700, lineHeight: 1.75 }}>
+      <Box x={58} y={374} w={130} h={98} cls="l tp" style={{ fontSize: 9.5, fontWeight: 700, lineHeight: 1.7 }}>
         <div>
           Donation ID
           <br />
@@ -133,16 +133,20 @@ export function Certificate({ d, qr }: { d: PublicDonation; qr: string }) {
           <br />
           Items / Footwear
           <br />
+          Donation Duration
+          <br />
           Collection Location
         </div>
       </Box>
-      <Box x={186} y={376} w={326} h={94} cls="l tp" style={{ fontSize: 9.5, lineHeight: 1.75 }}>
+      <Box x={186} y={374} w={326} h={98} cls="l tp" style={{ fontSize: 9.5, lineHeight: 1.7 }}>
         <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>
           :&nbsp; {d.id}
           <br />
           :&nbsp; {d.textileTypes.join(", ")}
           <br />
           :&nbsp; {d.items || "—"} items &nbsp;|&nbsp; {d.footwearPairs || 0} pairs footwear
+          <br />
+          :&nbsp; {d.duration || "One Time"}
           <br />
           :&nbsp; {d.camp}
         </div>
@@ -159,15 +163,19 @@ export function Certificate({ d, qr }: { d: PublicDonation; qr: string }) {
         {d.id}
       </Box>
 
-      {/* Signatory */}
-      <Box x={668} y={392} w={150} h={36} style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: 18, color: "#1A237E" }}>
+      {/* Signatory + official stamp */}
+      <Box x={697} y={346} w={92} h={92} style={{ transform: "rotate(-8deg)", opacity: 0.92 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size print asset, also rasterised for the PDF */}
+        <img src={ORG.stamp} alt="JIJA Textile Recovery Facility Panvel – official stamp" width={92} height={92} style={{ display: "block" }} />
+      </Box>
+      <Box x={668} y={414} w={150} h={30} style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: 18, color: "#1A237E" }}>
         {ORG.signatoryName}
       </Box>
-      <Box x={680} y={432} w={126} h={0.8} style={{ background: "#263238" }} />
-      <Box x={668} y={434} w={150} h={14} style={{ fontSize: 9, fontWeight: 700 }}>
+      <Box x={680} y={445} w={126} h={0.8} style={{ background: "#263238" }} />
+      <Box x={668} y={447} w={150} h={13} style={{ fontSize: 9, fontWeight: 700 }}>
         {ORG.signatoryDesignation}
       </Box>
-      <Box x={662} y={448} w={162} h={26} style={{ fontSize: 7.5, color: "#607D8B" }}>
+      <Box x={662} y={459} w={162} h={16} style={{ fontSize: 7.5, color: "#607D8B" }}>
         For {ORG.name}
       </Box>
 

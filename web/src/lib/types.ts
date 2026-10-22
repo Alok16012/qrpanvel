@@ -9,10 +9,12 @@ export interface Donation {
   mobile: string;
   email: string;
   address: string;
+  birthday: string; // YYYY-MM-DD or "" (private – used only for birthday wishes)
   textileTypes: string[];
   weightKg: number;
   items: number;
   footwearPairs: number;
+  duration: string; // One Time | Weekly | Monthly | … | All Time
   camp: string;
   donationDate: string; // YYYY-MM-DD
   status: DonationStatus;
@@ -39,6 +41,7 @@ export interface PublicDonation {
   weightKg: number;
   items: number;
   footwearPairs: number;
+  duration: string;
   camp: string;
   donationDate: string;
   status: DonationStatus;
@@ -54,6 +57,7 @@ export function toPublic(d: Donation): PublicDonation {
     weightKg: d.weightKg,
     items: d.items,
     footwearPairs: d.footwearPairs,
+    duration: d.duration,
     camp: d.camp,
     donationDate: d.donationDate,
     status: d.status,

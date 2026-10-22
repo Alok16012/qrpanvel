@@ -4,14 +4,26 @@ import { notFound } from "next/navigation";
 import { PublicFooter, PublicHeader } from "@/components/Brand";
 import { Certificate } from "@/components/Certificate";
 import { CertificateActions, ScaledCert } from "@/components/CertificateView";
+import { ORG } from "@/lib/config";
 import { store } from "@/lib/db";
-import { fmtKg, whatsappLink } from "@/lib/format";
+import { fmtKg, shareText, whatsappLink } from "@/lib/format";
 import { qrSvg, siteUrl } from "@/lib/site";
 import { toPublic } from "@/lib/types";
 
 export async function generateMetadata(props: PageProps<"/certificate/[id]">): Promise<Metadata> {
   const { id } = await props.params;
-  return { title: `Certificate ${decodeURIComponent(id).toUpperCase()}` };
+  const d = await store.getDonation(decodeURIComponent(id));
+  if (!d) return { title: `Certificate ${decodeURIComponent(id).toUpperCase()}` };
+  // Open Graph tags → Facebook / WhatsApp link previews show the donor's card
+  // (the image comes from ./opengraph-image.tsx).
+  const title = `Textile Donation Certificate – ${d.donorName}`;
+  const description = `${d.donorName} donated ${fmtKg(d.weightKg)} KG of textiles to ${ORG.name}. Donation ID ${d.id} · ${d.duration} · Zero Textile Waste Panvel ♻️`;
+  return {
+    title: `Certificate ${d.id}`,
+    description,
+    openGraph: { title, description, type: "article", siteName: ORG.short },
+    twitter: { card: "summary_large_image", title, description },
+  };
 }
 
 export default async function CertificatePage(props: PageProps<"/certificate/[id]">) {
@@ -40,8 +52,9 @@ export default async function CertificatePage(props: PageProps<"/certificate/[id
               <h1 className="font-head text-xl font-bold text-g">धन्यवाद, {d.donorName}! Donation registered.</h1>
               <p className="text-sm">
                 Donation ID <b className="font-head text-g">{d.id}</b> · {fmtKg(d.weightKg)} KG. Download your certificate
-                below or share it on WhatsApp.
-                {donation.email && " A copy will be emailed once email delivery is switched on."}
+                below or share it on WhatsApp / Facebook.
+                {donation.email && donation.emailStatus === "Sent" && " A copy has been emailed to you."}
+                {donation.email && donation.emailStatus !== "Sent" && " A copy will be emailed once email delivery is switched on."}
               </p>
             </div>
           </div>
@@ -55,7 +68,7 @@ export default async function CertificatePage(props: PageProps<"/certificate/[id
 
         <div className="no-print mb-5 flex flex-wrap items-center justify-between gap-3">
           {!isNew && <h1 className="font-head text-xl font-bold text-g">Certificate {d.id}</h1>}
-          <CertificateActions id={d.id} whatsapp={wa} verifyUrl={verifyUrl} />
+          <CertificateActions id={d.id} whatsapp={wa} verifyUrl={verifyUrl} certUrl={certUrl} shareText={shareText(d)} />
         </div>
 
         <ScaledCert>

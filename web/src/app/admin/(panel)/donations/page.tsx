@@ -102,10 +102,21 @@ export default async function DonationsPage(props: PageProps<"/admin/donations">
                 <td className="min-w-44">
                   <div className="font-semibold">{d.donorName}</div>
                   <div className="text-xs text-muted">{d.organization || d.donorType}</div>
+                  {d.birthday && (
+                    <div className="text-[11px] text-muted" title="Date of birth (private)">
+                      🎂 {fmtDate(d.birthday)}
+                    </div>
+                  )}
                 </td>
-                <td className="whitespace-nowrap tabular-nums">{d.mobile}</td>
+                <td className="whitespace-nowrap tabular-nums">
+                  {d.mobile}
+                  {d.email && <div className="max-w-40 truncate text-[11px] text-muted" title={d.email}>{d.email}</div>}
+                </td>
                 <td className="min-w-32 max-w-48 text-xs">{d.textileTypes.join(", ")}</td>
-                <td className="text-right font-bold tabular-nums">{fmtKg(d.weightKg)}</td>
+                <td className="text-right font-bold tabular-nums">
+                  {fmtKg(d.weightKg)}
+                  <div className="text-[11px] font-normal whitespace-nowrap text-muted">{d.duration}</div>
+                </td>
                 <td className="text-right tabular-nums">
                   {d.items || "—"} / {d.footwearPairs}
                 </td>

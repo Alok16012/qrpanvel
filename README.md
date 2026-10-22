@@ -1,6 +1,26 @@
 # JIJA TRF Panvel – Digital Textile Donation Management System
 
-Google Form + Sheet + Apps Script + Drive + Slides (certificate) + Looker Studio
+**JIJA Textile Recovery Facility – Panvel** · 📞 98346 65566 · ✉️ jtrfp@jijagroup.in · 🌐 jijagroup.in
+
+Do versions, ek hi design:
+
+| Folder | Kya hai |
+|---|---|
+| `web/` | **Next.js website** (Netlify par live) – QR form, instant stamped PDF certificate, verify page, admin dashboard, birthdays. Setup: `web/README.md` |
+| `apps-script/` | **Google Form + Sheet + Apps Script** version – zero hosting, sab Google Drive me. Setup niche. |
+
+Dono me ye features hain:
+
+- Donor name + donation weight (KG), unique certificate ID **`JTRF-2026-00001`** (year-wise auto reset)
+- **Donation Duration**: One Time · Weekly · Monthly · Quarterly · 6 Months · 1–5 Years · All Time (certificate par print hota hai)
+- **Date of Birth** (optional, private) + **automatic birthday wishes** roz subah 9 baje (email) + 1-tap WhatsApp wish
+- Automatic **PDF certificate** with official **JIJA round stamp** + Authorized Signatory
+- **Share on WhatsApp** + **Share on Facebook** (link preview me donor ka certificate card dikhta hai)
+- QR verification (mobile / email / DOB kabhi public nahi)
+
+---
+
+## Google version: Form + Sheet + Apps Script + Drive + Slides (certificate) + Looker Studio
 
 ```
 Donor QR scan → Google Form → Submit
@@ -31,7 +51,8 @@ Donor QR scan → Google Form → Submit
 3. `Code.gs` ka sara content paste karo (purana code hata do).
 4. **+ → HTML** → naam `Verify` → `Verify.html` ka content paste karo.
 5. **Project Settings (⚙️) → "Show appsscript.json manifest file"** tick karo → `appsscript.json` me humara content paste karo.
-6. `Code.gs` ke upar **CONFIG** me check karo: phone, email, camps ki list, signatory name.
+6. `Code.gs` ke upar **CONFIG** me check karo: phone, email, camps ki list, signatory name,
+   `STAMP_IMAGE_URL` (stamp PNG ka public link, e.g. `https://<netlify-site>/brand/stamp.png`), `BIRTHDAY_HOUR`.
 7. Save → Sheet ko refresh karo → menu me **JIJA TRF → 1. Setup System** chalao.
    - Pehli baar Google permission maangega → *Advanced → Go to project → Allow*.
 8. Setup ye sab apne aap bana dega:
@@ -39,7 +60,7 @@ Donor QR scan → Google Form → Submit
    - `Donations` sheet + system columns
    - Drive folders + **Certificate template (Google Slides, A4 landscape)**
    - `Dashboard` sheet
-   - Form submit trigger
+   - Form submit trigger + **daily birthday trigger** (9 AM)
    - `Camp QR Links` sheet + Drive me QR PNGs (general + har camp ka alag QR)
 
 ### Verification QR chalu karna (recommended)
@@ -55,11 +76,15 @@ Donor QR scan → Google Form → Submit
 
 Form questions → Sheet headers (script inhi **naamon** se data padhta hai, column number se nahi):
 
-`Timestamp | Donor Name | Donor Type | Organization / Society / School Name | Mobile Number | Email (certificate will be emailed) | Address | Type of Textile | Estimated Quantity (Kg) | Number of Items (approx.) | Footwear (pairs) | Collection Camp / Location | Date of Donation | Consent`
+`Timestamp | Donor Name | Donor Type | Organization / Society / School Name | Mobile Number | Email (certificate will be emailed) | Address | Date of Birth (for birthday wishes) | Type of Textile | Estimated Quantity (Kg) | Number of Items (approx.) | Footwear (pairs) | Donation Duration | Collection Camp / Location | Date of Donation | Consent`
 
 System columns (script khud add karta hai):
 
-`Donation ID | Certificate Status | Certificate Link | Certificate File ID | Email Status | WhatsApp Share Link | Verify Link | Processed At`
+`Donation ID | Certificate Status | Certificate Link | Certificate File ID | Email Status | WhatsApp Share Link | Facebook Share Link | Verify Link | Processed At`
+
+> Purana Form/Sheet already bana hua hai? Form me 2 naye question add karo (titles exactly upar jaise:
+> `Date of Birth (for birthday wishes)` – Date, aur `Donation Duration` – Dropdown with CONFIG.DURATIONS values).
+> Sheet me columns apne aap aa jayenge. Phir Slides template me `{{DURATION}}` placeholder add karo.
 
 > Form me questions aage-peeche karo, naya question jodo — system chalta rahega.
 > ⚠️ Bas **question ka title mat badlo**. Badalna ho to `Code.gs` ke `Q` object me bhi wahi text likho.
@@ -74,9 +99,10 @@ System columns (script khud add karta hai):
 - Design badalna ho to Slides me seedha edit karo. **Apna banaya hua image (jaise upar wala certificate) background
   me lagana ho**: Slide → *Change background → Choose image* — aur text boxes rakho.
 - Placeholders jo zaroor rakhne hain:
-  `{{DONOR_NAME}} {{ORGANIZATION}} {{WEIGHT}} {{DONATION_ID}} {{DONATION_DATE}} {{TEXTILE_TYPE}} {{ITEMS}} {{FOOTWEAR}} {{LOCATION}} {{SIGNATORY_NAME}} {{SIGNATORY_DESIGNATION}} {{ISSUE_DATE}} {{QR}}`
+  `{{DONOR_NAME}} {{ORGANIZATION}} {{WEIGHT}} {{DONATION_ID}} {{DONATION_DATE}} {{TEXTILE_TYPE}} {{ITEMS}} {{FOOTWEAR}} {{DURATION}} {{LOCATION}} {{SIGNATORY_NAME}} {{SIGNATORY_DESIGNATION}} {{ISSUE_DATE}} {{QR}}`
 - `{{QR}}` wala box jahan rakhoge, QR wahi aayega (usi size me).
-- Signature image chahiye to template me signature PNG + stamp PNG insert kar do — har certificate me aayega.
+- **Stamp**: `CONFIG.STAMP_IMAGE_URL` set ho to Setup template me signature ke paas round stamp laga deta hai.
+  Ya template me `web/public/brand/stamp.png` khud insert kar do. Signature image bhi aise hi insert karo — har certificate me aayega.
 - Lamba naam ho to font apne aap chhota ho jata hai.
 
 ## Daily use
@@ -87,6 +113,8 @@ System columns (script khud add karta hai):
 | Kisi certificate me error | Row select → **JIJA TRF → Regenerate certificate (selected row)** (ID wahi rehta hai) |
 | Offline register se entry | `Donations` sheet me row bharo (Donor Name, KG, …) → **Process pending rows** |
 | WhatsApp par bhejna | Row ke `WhatsApp Share Link` par click → WhatsApp me message ready → Send |
+| Facebook par share | Row ke `Facebook Share Link` par click (ya donor khud verify page se "Share on Facebook") |
+| Birthday wishes | Roz 9 AM apne aap: email jata hai + `Birthdays` sheet me WhatsApp wish link. Manually: **JIJA TRF → Send today's birthday wishes** |
 | Dashboard | `Dashboard` sheet (har submit par auto update) |
 
 ## Looker Studio dashboard

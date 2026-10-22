@@ -2,8 +2,8 @@ import "server-only";
 import { promises as fs, constants } from "fs";
 import path from "path";
 import os from "os";
-import { DEFAULT_CAMPS, ORG } from "../config";
-import { slugify } from "../format";
+import { DEFAULT_CAMPS, DEFAULT_DURATION, DURATIONS, ORG } from "../config";
+import { slugify, todayIST } from "../format";
 import type { Camp, Donation } from "../types";
 import type { Store } from "./types";
 
@@ -31,9 +31,18 @@ function serial<T>(fn: () => Promise<T>): Promise<T> {
 
 let seeding: Promise<DbFile> | null = null;
 
+/** Older demo files predate the duration / birthday fields – fill defaults. */
+function normalize(db: DbFile): DbFile {
+  for (const d of db.donations) {
+    d.duration ||= DEFAULT_DURATION;
+    d.birthday ||= "";
+  }
+  return db;
+}
+
 async function read(): Promise<DbFile> {
   try {
-    return JSON.parse(await fs.readFile(DB_PATH, "utf8")) as DbFile;
+    return normalize(JSON.parse(await fs.readFile(DB_PATH, "utf8")) as DbFile);
   } catch {
     // First run: create the file once, even if many requests arrive together.
     seeding ??= (async () => {
@@ -114,6 +123,16 @@ export const jsonStore: Store = {
     });
   },
 
+  setEmailStatus(id, emailStatus) {
+    return serial(async () => {
+      const db = await read();
+      const d = db.donations.find((x) => x.id === id);
+      if (!d) throw new Error("Donation not found");
+      d.emailStatus = emailStatus;
+      await write(db);
+    });
+  },
+
   async listCamps() {
     return (await read()).camps;
   },
@@ -185,6 +204,15 @@ function seed(): DbFile {
     ["Panvel Youth Volunteers", "NGO / Other", "Panvel Youth Volunteers Group", "9822456123", ["Clothes", "Footwear"], 52, 150, 24, 1],
   ];
 
+  // A few demo birthdays fall today / in the next days so the Birthdays page has something to show.
+  const today = todayIST();
+  const bday = (yearsAgo: number, daysFromToday: number) => {
+    const t = new Date(Date.parse(today) + daysFromToday * 864e5);
+    return `${t.getUTCFullYear() - yearsAgo}-${t.toISOString().slice(5, 10)}`;
+  };
+  const birthdays: Record<number, string> = { 1: bday(34, 0), 9: bday(41, 0), 2: bday(29, 1), 13: bday(37, 3), 5: bday(52, 12), 19: bday(45, 25) };
+  const durations = ["One Time", "Monthly", "One Time", "Quarterly", "6 Months", "One Time", "Monthly", "One Time", "1 Year", "One Time", "Monthly", "Weekly", "1 Year", "One Time", "Quarterly", "One Time", "All Time", "One Time", "Monthly", "One Time", "One Time", "6 Months"];
+
   // Spread across May–Oct 2026, oldest first so IDs increase with time.
   const start = Date.UTC(2026, 4, 12);
   const end = Date.UTC(2026, 9, 3);
@@ -200,10 +228,12 @@ function seed(): DbFile {
       mobile: s[3],
       email: i % 3 === 0 ? `${slugify(s[0]).split("-")[0]}@example.com` : "",
       address: "Panvel, Navi Mumbai",
+      birthday: birthdays[i] ?? "",
       textileTypes: s[4],
       weightKg: s[5],
       items: s[6],
       footwearPairs: s[7],
+      duration: durations[i] ?? DURATIONS[0],
       camp: camps[s[8]].name,
       donationDate: date.toISOString().slice(0, 10),
       status: "issued" as const,

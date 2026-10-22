@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitDonation, type FormState } from "@/app/actions";
-import { DONOR_TYPES, ORG, TEXTILE_TYPES } from "@/lib/config";
+import { DEFAULT_DURATION, DONOR_TYPES, DURATIONS, ORG, TEXTILE_TYPES } from "@/lib/config";
 
 interface Props {
   camps: string[];
@@ -41,6 +41,8 @@ export function DonationForm({ camps, defaultCamp, today, source, showDemoFill }
     set("weightKg", "12.5");
     set("items", "34");
     set("footwearPairs", "4");
+    set("birthday", "1988-03-15");
+    (f.querySelector('[name=duration][value="Monthly"]') as HTMLInputElement).checked = true;
     (f.querySelector('[name=donorType][value="Individual"]') as HTMLInputElement).checked = true;
     f.querySelectorAll<HTMLInputElement>("[name=textileTypes]").forEach(
       (c) => (c.checked = c.value === "Clothes" || c.value === "Footwear"),
@@ -117,6 +119,14 @@ export function DonationForm({ camps, defaultCamp, today, source, showDemoFill }
         <Field label="Address">
           <textarea name="address" rows={2} className="input" defaultValue={v("address")} autoComplete="street-address" />
         </Field>
+
+        <Field
+          label="Date of Birth"
+          hint="Optional — जन्मतारीख. We will send you birthday wishes 🎂 (never shown publicly)"
+          error={e.birthday}
+        >
+          <input name="birthday" type="date" className="input sm:max-w-xs" max={today} defaultValue={v("birthday")} autoComplete="bday" />
+        </Field>
       </Section>
 
       <Section title="Donation details">
@@ -151,6 +161,30 @@ export function DonationForm({ camps, defaultCamp, today, source, showDemoFill }
             <input name="footwearPairs" className="input" inputMode="numeric" defaultValue={v("footwearPairs")} />
           </Field>
         </div>
+
+        <Field
+          label="Donation Duration"
+          required
+          hint="How often / for how long would you like to donate? Printed on the certificate."
+          error={e.duration}
+        >
+          <div className="flex flex-wrap gap-2">
+            {DURATIONS.map((t) => (
+              <label key={t} className="cursor-pointer">
+                <input
+                  type="radio"
+                  name="duration"
+                  value={t}
+                  defaultChecked={(v("duration") || DEFAULT_DURATION) === t}
+                  className="peer sr-only"
+                />
+                <span className="inline-block rounded-full border border-line bg-white px-3.5 py-1.5 text-sm font-semibold text-muted transition peer-checked:border-g2 peer-checked:bg-mint peer-checked:text-g peer-focus-visible:ring-2 peer-focus-visible:ring-mb">
+                  {t}
+                </span>
+              </label>
+            ))}
+          </div>
+        </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Collection Camp / Location" required error={e.camp}>

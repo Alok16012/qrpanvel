@@ -1,6 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { PublicFooter, PublicHeader } from "@/components/Brand";
+import { ORG } from "@/lib/config";
 import { store } from "@/lib/db";
 import { fmtKg } from "@/lib/format";
 
@@ -19,6 +21,13 @@ export default async function Home() {
           <div className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-leaf/30 blur-3xl" />
           <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:py-20 lg:grid-cols-[1.2fr_1fr] lg:items-center">
             <div>
+              <div className="mb-5 flex items-center gap-4">
+                <Image src={ORG.stamp} alt="JIJA Textile Recovery Facility Panvel" width={88} height={88} priority className="size-20 rounded-full bg-white p-1 shadow-lg sm:size-22" />
+                <div>
+                  <p className="font-head text-2xl font-bold leading-tight">JIJA.</p>
+                  <p className="text-sm font-semibold tracking-wide text-white/85">Textile Recovery Facility · Panvel</p>
+                </div>
+              </div>
               <p className="font-deva text-lg font-semibold text-mb">वस्त्रदान शिबिर · Textile Donation Drive</p>
               <h1 className="mt-3 font-head text-4xl leading-tight font-bold sm:text-5xl">
                 Give old clothes a <span className="text-gold">new life</span>.
@@ -52,8 +61,8 @@ export default async function Home() {
             {[
               ["1", "Scan camp QR", "Every camp has its own QR — the camp is pre-selected for you."],
               ["2", "Fill the form", "Name, mobile, textile type and approximate weight."],
-              ["3", "Get certificate", "A unique Donation ID (JTRF-2026-xxxxx) and PDF certificate instantly."],
-              ["4", "Verify anytime", "Anyone can scan the certificate’s QR to confirm it is genuine."],
+              ["3", "Get certificate", "A unique Donation ID (JTRF-2026-xxxxx) and stamped PDF certificate instantly."],
+              ["4", "Share & verify", "Share it on WhatsApp or Facebook — anyone can scan the QR to confirm it is genuine."],
             ].map(([n, t, d]) => (
               <div key={n} className="card p-5">
                 <span className="grid size-9 place-items-center rounded-full bg-mint font-head font-bold text-g">{n}</span>
@@ -74,6 +83,39 @@ export default async function Home() {
                 <p className="mt-1 text-sm">{d}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section id="contact" className="border-t border-line bg-white">
+          <div className="mx-auto grid max-w-6xl gap-8 px-4 py-14 md:grid-cols-[auto_1fr] md:items-center">
+            <Image src={ORG.stamp} alt="JIJA Textile Recovery Facility Panvel – official stamp" width={180} height={180} className="mx-auto size-40 md:size-44" />
+            <div>
+              <h2 className="font-head text-2xl font-bold text-g">Contact JIJA TRF Panvel</h2>
+              <p className="mt-1 text-sm text-muted">
+                Want to organise a textile donation camp in your society, school or office? Call or write to us.
+              </p>
+              <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+                {[
+                  ["Phone", ORG.phone, `tel:+${ORG.phoneIntl}`],
+                  ["Email", ORG.email, `mailto:${ORG.email}`],
+                  ["Website", ORG.website, ORG.websiteUrl],
+                ].map(([k, v, href]) => (
+                  <div key={k} className="rounded-xl border border-line bg-cream p-4">
+                    <dt className="text-xs font-bold tracking-wide text-muted uppercase">{k}</dt>
+                    <dd className="mt-1">
+                      <a href={href} className="font-head font-semibold break-all text-g2 hover:underline" target={href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer">
+                        {v}
+                      </a>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {ORG.facebookPage && (
+                <a href={ORG.facebookPage} target="_blank" rel="noopener noreferrer" className="btn mt-4 bg-[#1877F2] hover:bg-[#145dbf]">
+                  Follow us on Facebook
+                </a>
+              )}
+            </div>
           </div>
         </section>
       </main>

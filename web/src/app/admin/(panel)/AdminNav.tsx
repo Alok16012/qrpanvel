@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/admin/donations", label: "Donations", icon: "☰" },
   { href: "/admin/donations/new", label: "New entry", icon: "+" },
   { href: "/admin/camps", label: "Camps & QR", icon: "⌗" },
+  { href: "/admin/birthdays", label: "Birthdays", icon: "🎂" },
 ];
 
 export function AdminNav() {

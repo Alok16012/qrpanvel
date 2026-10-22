@@ -13,10 +13,12 @@ interface DonationRow {
   mobile: string;
   email: string;
   address: string;
+  birthday: string | null;
   textile_types: string[];
   weight_kg: number;
   items: number;
   footwear_pairs: number;
+  duration: string;
   camp: string;
   donation_date: string;
   status: Donation["status"];
@@ -39,10 +41,12 @@ const fromRow = (r: DonationRow): Donation => ({
   mobile: r.mobile,
   email: r.email,
   address: r.address,
+  birthday: r.birthday ?? "",
   textileTypes: r.textile_types,
   weightKg: Number(r.weight_kg),
   items: r.items,
   footwearPairs: r.footwear_pairs,
+  duration: r.duration,
   camp: r.camp,
   donationDate: r.donation_date,
   status: r.status,
@@ -79,10 +83,12 @@ export const supabaseStore: Store = {
           mobile: input.mobile,
           email: input.email,
           address: input.address,
+          birthday: input.birthday || null,
           textile_types: input.textileTypes,
           weight_kg: input.weightKg,
           items: input.items,
           footwear_pairs: input.footwearPairs,
+          duration: input.duration,
           camp: input.camp,
           donation_date: input.donationDate,
           email_status: emailStatus,
@@ -105,6 +111,10 @@ export const supabaseStore: Store = {
 
   async setDonationStatus(id, status) {
     check(await db().from("donations").update({ status }).eq("id", id));
+  },
+
+  async setEmailStatus(id, emailStatus) {
+    check(await db().from("donations").update({ email_status: emailStatus }).eq("id", id));
   },
 
   async listCamps() {

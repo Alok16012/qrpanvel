@@ -19,16 +19,22 @@ create table if not exists public.donations (
   mobile          text not null check (mobile ~ '^[6-9][0-9]{9}$'),
   email           text not null default '',
   address         text not null default '',
+  birthday        date,                            -- optional, private: birthday wishes only
   textile_types   text[] not null,
   weight_kg       numeric(10,2) not null check (weight_kg > 0),
   items           integer not null default 0 check (items >= 0),
   footwear_pairs  integer not null default 0 check (footwear_pairs >= 0),
+  duration        text not null default 'One Time', -- One Time | Weekly | Monthly | … | All Time
   camp            text not null,
   donation_date   date not null,
   status          text not null default 'issued' check (status in ('issued','void')),
   email_status    text not null default '',
   source          text not null default 'form' check (source in ('form','admin'))
 );
+
+-- Upgrading an older database? These add the new columns without touching data.
+alter table public.donations add column if not exists birthday date;
+alter table public.donations add column if not exists duration text not null default 'One Time';
 
 create index if not exists donations_created_at_idx on public.donations (created_at desc);
 create index if not exists donations_mobile_idx on public.donations (mobile);
@@ -57,17 +63,18 @@ begin
   returning last into n;
 
   insert into donations (
-    id, donor_name, donor_type, organization, mobile, email, address,
-    textile_types, weight_kg, items, footwear_pairs, camp, donation_date,
+    id, donor_name, donor_type, organization, mobile, email, address, birthday,
+    textile_types, weight_kg, items, footwear_pairs, duration, camp, donation_date,
     email_status, source
   ) values (
     'JTRF-' || y || '-' || lpad(n::text, 5, '0'),
     p->>'donor_name', p->>'donor_type', coalesce(p->>'organization',''),
     p->>'mobile', coalesce(p->>'email',''), coalesce(p->>'address',''),
+    nullif(p->>'birthday', '')::date,
     array(select jsonb_array_elements_text(p->'textile_types')),
     (p->>'weight_kg')::numeric, coalesce((p->>'items')::int, 0),
-    coalesce((p->>'footwear_pairs')::int, 0), p->>'camp',
-    (p->>'donation_date')::date, coalesce(p->>'email_status',''),
+    coalesce((p->>'footwear_pairs')::int, 0), coalesce(nullif(p->>'duration',''), 'One Time'),
+    p->>'camp', (p->>'donation_date')::date, coalesce(p->>'email_status',''),
     coalesce(p->>'source','form')
   )
   returning * into rec;
